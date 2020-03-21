@@ -8,15 +8,18 @@ const app = new Application();
 const { exec } = require('mz/child_process');
 fs.ensureDirSync(cacheRoot);
 
+// http://localhost/img.jpg?h=100
+// http://localhost/img.jpg?w=100
+// http://localhost/img.jpg?w=100&h=100
 app.use(async ctx => {
-  let width = +ctx.request.query.w;
-  let height = +ctx.request.query.h;
+  let width = ctx.request.query.w ? +ctx.request.query.w : 0;
+  let height = ctx.request.query.h ? ctx.request.query.h : 0;
 
-  if (width && (width % 10 != 0 || width > 1000)) {
+  if (width % 10 != 0 || width > 1000) {
     ctx.throw(400, 'Invalid width.');
   }
   
-  if (height && (height % 10 != 0 || height > 1000)) {
+  if (height % 10 != 0 || height > 1000) {
     ctx.throw(400, 'Invalid height.');
   }
 
@@ -29,8 +32,8 @@ app.use(async ctx => {
     ctx.throw(404);
   }
 
-  if (width && height) {
-    let cacheDir = path.resolve(cacheRoot, ''+ width, '' + height);
+  if (width || height) {
+    let cacheDir = path.resolve(cacheRoot, String(width),  String(height));
     let cachedImagePath = path.resolve(cacheDir, imageFileName);
 
     if (fs.existsSync(cachedImagePath)) {
@@ -40,7 +43,9 @@ app.use(async ctx => {
     
     await fs.ensureDir(cacheDir);
 
-    await exec(`convert ${imagePath} -resize ${width}x${height} ${cachedImagePath}`, {
+    let cmd = `convert ${imagePath} -resize ${width || ''}x${height || ''} ${cachedImagePath}`;
+    // console.log(cmd)
+    await exec(cmd, {
       stdio: 'inherit',
       encoding: 'utf-8'
     });

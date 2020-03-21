@@ -13,7 +13,6 @@ task('server', async function() {
   await new Promise(res => server.on('close', res));
 });
 
-
 task('nodemon', async function() {
   nodemon({
     ext:      "js",
